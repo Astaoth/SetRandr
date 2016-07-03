@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="alpha-01"
+VERSION="alpha-05"
 CONFIG=~/.config/SetRandr.cfg
 ID=""
 
@@ -14,6 +14,7 @@ function usage() {
     echo -e "\t-v : print version."
     echo -e "\t-c <config file> : use the given config file. By default : ~/.config/SetRandr.cfg"
     echo -e "\t-load <name> : if no name is given, try to load the matching profil or starts the setup (default action). If a profil name is given, try to load the given profil ; if it doesn't exist, do nothing."
+    echo -e "\t-silent <name> : like -load, but without any interactions required."
     echo -e "\t-list : list the saved profils."
     echo -e "\t-check <name>: if no name is given, print the matching saved profil of the current screens. If a name is given, display the matching profil.."
     echo -e "\t-save <name> : save the current profil under the given name if any. The name is not mandatory."
@@ -221,9 +222,12 @@ function delete() {
     fi
 }
 
-# Check if there is any profil which matches the current screens or the given profil name. If it is the case, load it, if there is no profil, execute the setup.
+# Check if there is any profil which matches the current screens or the given profil name. If it is the case, load it, if there is no profil, execute the setup and save the profil.
+# First parameter is the mode. Can be "silent" or "interactive". The silent mode will not execut the setup
 function load() {
     cmd=""
+    mode=$1
+    shift
     if [[ $# -gt 0 ]]
     then
 	#Check if the given string doesn't contains '#' since it's the file separator
@@ -242,8 +246,10 @@ function load() {
     if [[ $(echo "$cmd") != "" ]]
     then echo "Exec : $cmd"
 	 exec $cmd
-    else setup
+    elif [[ $mode == "interactive" ]]
+    then setup
 	 save
+    else echo "Silent mode, no setup"
     fi 
 }
 
@@ -320,7 +326,7 @@ ID=$(getID)
 #echo $current_edid
 
 if [[ $# -eq 0 ]]
-then load
+then usage
 elif [ $1 = "-list" ]
 then list
 elif [ $1 = "-setup" ]
@@ -359,9 +365,16 @@ then shift
 elif [ $1 = "-load" ]
 then shift
      if [[ $# -eq 0 ]]
-     then load
-     else load $*
+     then load "interactive"
+     else load "interactive" $*
      fi
+elif [ $1 = "-silent" ]
+then shift
+     if [[ $# -eq 0 ]]
+     then load "silent"
+     else load "silent" $*
+     fi
+else usage
 fi
 
 exit 0
